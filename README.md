@@ -16,4 +16,4 @@ A modern, dark-mode Weather Application built with Flutter that provides real-ti
 ## 🚀 Getting Started
 1. **Clone the repo:**
    ```bash
-   git clone [https://github.com/Manasi-creator/weather-app.git](https://github.com/Manasi-creator/weather-app.git)
+   git clone [https://github.com/Manasi-creator/weather-app.git](https://github.com/Manas/weather-app.git)
