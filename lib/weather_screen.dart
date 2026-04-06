@@ -15,6 +15,7 @@ class WeatherScreen extends StatefulWidget {
 }
 
 class _WeatherScreenState extends State<WeatherScreen> {
+  late Future<Map<String, dynamic>> weather;
   Future<Map<String, dynamic>> getCurrentWeather() async {
     try {
       final apiKey = dotenv.env['API_KEY']?.replaceAll('"', '').trim();
@@ -43,6 +44,12 @@ class _WeatherScreenState extends State<WeatherScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    weather = getCurrentWeather();
+  }
+
+  @override
   Widget build(BuildContext contect) {
     return Scaffold(
       appBar: AppBar(
@@ -52,7 +59,14 @@ class _WeatherScreenState extends State<WeatherScreen> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.refresh)),
+          IconButton(
+            onPressed: () {
+              setState(() {
+                weather = getCurrentWeather();
+              });
+            },
+            icon: const Icon(Icons.refresh),
+          ),
         ],
       ),
       body: FutureBuilder(
