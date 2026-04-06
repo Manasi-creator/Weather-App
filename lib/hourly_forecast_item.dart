@@ -24,6 +24,8 @@ class HourlyForecastItem extends StatelessWidget {
             Text(
               time,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              maxLines : 1,
+              overflow : TextOverflow.ellipsis,
             ),
             Icon(icon, size: 30),
             const SizedBox(height: 10),

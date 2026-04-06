@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:weather_app/additional_info_item.dart';
 import 'package:weather_app/hourly_forecast_item.dart';
 import 'package:http/http.dart' as http;
@@ -131,23 +132,28 @@ class _WeatherScreenState extends State<WeatherScreen> {
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (int i = 1; i <= 8; i++)
-                        HourlyForecastItem(
-                          time: data['list'][i]['dt'].toString(),
-                          icon: data['list'][i]['weather'][0]['main'] == 'Rain'
-                              ? Icons.cloudy_snowing
-                              : data['list'][i]['weather'][0]['main'] ==
-                                    'Clouds'
-                              ? Icons.cloud
-                              : Icons.sunny,
-                          temperature: data['list'][i]['main']['temp']
-                              .toString(),
-                        ),
-                    ],
+
+                SizedBox(
+                  height: 120,
+                  child: ListView.builder(
+                    itemCount: 8,
+                    scrollDirection: Axis.horizontal,
+                    itemBuilder: (context, index) {
+                      final hourlyForecast = data['list'][index + 1];
+                      final hourlySky = hourlyForecast['weather'][0]['main'];
+                      final hourlyTemp = hourlyForecast['main']['temp']
+                          .toString();
+                      final time = DateTime.parse(hourlyForecast['dt_txt']);
+                      return HourlyForecastItem(
+                        time: DateFormat('j').format(time),
+                        temperature: hourlyTemp,
+                        icon: hourlySky == 'Rain'
+                            ? Icons.cloudy_snowing
+                            : hourlySky == 'Clouds'
+                            ? Icons.cloud
+                            : Icons.sunny,
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 30),
