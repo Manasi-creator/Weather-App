@@ -16,7 +16,7 @@ class WeatherScreen extends StatefulWidget {
 class _WeatherScreenState extends State<WeatherScreen> {
   Future<Map<String, dynamic>> getCurrentWeather() async {
     try {
-      final apiKey = dotenv.env['API_KEY'];
+      final apiKey = dotenv.env['API_KEY']?.replaceAll('"', '').trim();
       if (apiKey == null || apiKey.isEmpty) {
         throw 'API key not found. Set API_KEY in your .env file.';
       }
@@ -24,19 +24,18 @@ class _WeatherScreenState extends State<WeatherScreen> {
       String cityName = 'London';
       final res = await http.get(
         Uri.parse(
-          'https://api.openweathermap.org/data/2.5/forecast?q=$cityName,uk&APPID=$apiKey',
+          'https://api.openweathermap.org/data/2.5/forecast?q=$cityName,uk&appid=$apiKey',
         ),
       );
 
-      final data = jsonDecode(res.body);
-
-      // if (data['cod'] != '200') {
-      //   throw 'An unexpected error occurred';
-      // }
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      final cod = data['cod']?.toString();
+      if (res.statusCode != 200 || cod != '200') {
+        final message = data['message'] ?? 'Failed to fetch weather';
+        throw 'Weather API error: $message';
+      }
 
       return data;
-
-      //data['list'][0]['main']['temp'];
     } catch (e) {
       throw e.toString();
     }
@@ -66,9 +65,18 @@ class _WeatherScreenState extends State<WeatherScreen> {
             return Center(child: Text(snapshot.error.toString()));
           }
 
-          final data = snapshot.data;
+          final data = snapshot.data!;
+          final weatherList = data['list'] as List<dynamic>?;
+          if (weatherList == null || weatherList.isEmpty) {
+            return const Center(child: Text('No weather data available'));
+          }
 
-          final currentTemp = data?['list'][0]['main']['temp'];
+          final currentWeatherData = data['list'][0];
+          final currentTemp = currentWeatherData['main']['temp'];
+          final currentSky = currentWeatherData['weather'][0]['main'];
+          final currentHumidity = currentWeatherData['main']['humidity'];
+          final currentWindSpeed = currentWeatherData['wind']['speed'];
+          final currentPressure = currentWeatherData['main']['pressure'];
 
           return Padding(
             padding: const EdgeInsets.all(16.0),
@@ -97,8 +105,18 @@ class _WeatherScreenState extends State<WeatherScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              Icon(Icons.cloud, size: 100),
-                              Text('Rain', style: TextStyle(fontSize: 26)),
+                              Icon(
+                                currentSky == 'Rain'
+                                    ? Icons.cloudy_snowing
+                                    : currentSky == 'Clouds'
+                                    ? Icons.cloud
+                                    : Icons.sunny,
+                                size: 100,
+                              ),
+                              Text(
+                                '$currentSky',
+                                style: TextStyle(fontSize: 26),
+                              ),
                             ],
                           ),
                         ),
@@ -109,7 +127,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
                 //weather forecast cards
                 const SizedBox(height: 30),
                 const Text(
-                  'Weather Forecast',
+                  'Hourly Forecast',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
@@ -117,14 +135,18 @@ class _WeatherScreenState extends State<WeatherScreen> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      HourlyForecastItem(time: '09:00', temperature: '301.17'),
-                      HourlyForecastItem(time: '12:00', temperature: '300.08'),
-                      HourlyForecastItem(time: '15:00', temperature: '301.78'),
-                      HourlyForecastItem(time: '18:00', temperature: '300.42'),
-                      HourlyForecastItem(time: '21:00', temperature: '302.09'),
-                      HourlyForecastItem(time: '24:00', temperature: '301.49'),
-                      HourlyForecastItem(time: '03:00', temperature: '301.67'),
-                      HourlyForecastItem(time: '06:00', temperature: '301.82'),
+                      for (int i = 1; i <= 8; i++)
+                        HourlyForecastItem(
+                          time: data['list'][i]['dt'].toString(),
+                          icon: data['list'][i]['weather'][0]['main'] == 'Rain'
+                              ? Icons.cloudy_snowing
+                              : data['list'][i]['weather'][0]['main'] ==
+                                    'Clouds'
+                              ? Icons.cloud
+                              : Icons.sunny,
+                          temperature: data['list'][i]['main']['temp']
+                              .toString(),
+                        ),
                     ],
                   ),
                 ),
@@ -141,17 +163,17 @@ class _WeatherScreenState extends State<WeatherScreen> {
                     AdditionalInfoItem(
                       icon: Icons.water_drop,
                       label: 'Humidity',
-                      value: '91',
+                      value: currentHumidity.toString(),
                     ),
                     AdditionalInfoItem(
                       icon: Icons.air,
                       label: 'Wind Speed',
-                      value: '7',
+                      value: currentWindSpeed.toString(),
                     ),
                     AdditionalInfoItem(
                       icon: Icons.speed,
                       label: 'Pressure',
-                      value: '1000',
+                      value: currentPressure.toString(),
                     ),
                   ],
                 ),
